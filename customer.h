@@ -1,34 +1,18 @@
-#include <iostream>
-#include <string>
-#include "person.h"
 #ifndef CUSTOMER
 #define CUSTOMER
-using namespace std;
-
-class customer : public person{
-
+#include "person.h"
+class customer : public person {
 private:
-
-int MechanicID;
-appointment Appointment;
-
-
+    int MechanicID = -1;
+    appointment Appointment{0, 0};
 public:
-
-void setMechanicID(int);
-
-void setappointment(appointment);
-
-int getMechanicID();
-
-appointment getappointment();
-
-bool operator<  (const appointment &x );
-bool operator>  (const appointment &x);
-bool operator== (const appointment &x);
-
-void print();
-
+    void setMechanicID(int);
+    void setappointment(appointment);
+    int getMechanicID() const;
+    appointment getappointment() const;
+    bool operator<(const appointment &);
+    bool operator>(const appointment &);
+    bool operator==(const appointment &);
+    void print();
 };
-
 #endif
