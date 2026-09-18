@@ -1,30 +1,18 @@
 #ifndef MECHANIC
 #define MECHANIC
-#include <iostream>
 #include "person.h"
-
-
-class mechanic : public person{
+class mechanic : public person {
 private:
-int counter;
-appointment apps[4]; //assume a max of 4 appointments per day
-
+    static constexpr int maxAppointments = 4;
+    int counter = 0;
+    appointment apps[maxAppointments]{};
 public:
-mechanic();
-
-bool isavailable(appointment);
-
-
-void setcounter(int );
-
-void setappointments(appointment );
-
-int getcounter();
-
-appointment getappointment();
-void print();
+    mechanic();
+    bool isavailable(appointment ap);
+    void setcounter(int x);
+    void setappointments(appointment ap);
+    int getcounter();
+    appointment getappointment();
+    void print();
 };
-
-
-
 #endif

@@ -1,37 +1,36 @@
-
 #include "mechanic.h"
+#include <cstdlib>
+#include <stdexcept>
 
-
-mechanic:: mechanic(){
-  counter = 0;
+namespace {
+int minutes(appointment time) { return time.hours * 60 + time.mins; }
+bool valid(appointment time) {
+    return time.hours >= 0 && time.hours < 24 && time.mins >= 0 &&
+           time.mins < 60 && minutes(time) + 60 <= 24 * 60;
+}
 }
 
-bool mechanic::isavailable(appointment ap){ //incomplete
-  if (counter <10)
+mechanic::mechanic() = default;
+bool mechanic::isavailable(appointment ap) {
+    if (!valid(ap) || counter >= maxAppointments) return false;
+    for (int i = 0; i < counter; ++i) {
+        if (std::abs(minutes(ap) - minutes(apps[i])) < 60) return false;
+    }
     return true;
-  else return false;
 }
-
-
-void mechanic::setcounter(int x){
-  counter = x;}
-
-void mechanic::setappointments(appointment app){
-  apps[++counter].hours = app.hours+1;
-  apps[counter].mins =app.mins;
-
+void mechanic::setcounter(int x) {
+    if (x < 0 || x > maxAppointments) throw std::out_of_range("appointment count outside capacity");
+    counter = x;
 }
-
-int mechanic::getcounter(){
-  return counter;}
-
-appointment mechanic::getappointment(){
-  return apps[counter];
+void mechanic::setappointments(appointment ap) {
+    if (!isavailable(ap)) throw std::invalid_argument("invalid, overlapping or over-capacity appointment");
+    apps[counter++] = ap;
 }
-void mechanic::print(){
-  cout << "Name: "<< name <<endl;
-  cout << "Mechanic ID: "<< id << endl;
-  cout << "Age: "<< age << endl;}
-
-
-
+int mechanic::getcounter() { return counter; }
+appointment mechanic::getappointment() {
+    if (counter == 0) throw std::out_of_range("no appointments");
+    return apps[counter - 1];
+}
+void mechanic::print() {
+    std::cout << "Name: " << name << '\n' << "Mechanic ID: " << id << '\n' << "Age: " << age << '\n';
+}

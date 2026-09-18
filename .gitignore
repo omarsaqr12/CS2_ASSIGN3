@@ -1,0 +1,4 @@
+/scheduler
+/mechanic_test
+*.o
+__pycache__/

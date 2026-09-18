@@ -1,169 +1,106 @@
-#include <iostream>
-#include "mechanic.h"
-#include "person.h"
 #include "customer.h"
-#include <string>
-#include <queue>
+#include "mechanic.h"
+
+#include <algorithm>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 
-#define SIZE 10
+namespace {
+constexpr int serviceMinutes = 60;
 
-// A class to represent a queue
-template <class X>
-class queue
-{
-	X *arr; 		// array to store queue elements
-	int capacity;   // maximum capacity of the queue
-	int front;  	// front points to the front element in the queue (if any)
-	int rear;   	// rear points to the last element in the queue
-	int count;  	// current size of the queue
-
-public:
-	queue(int size = SIZE); 	// constructor
-
-	void dequeue();
-	void enqueue(X x);
-	X peek();
-	int size();
-	bool isEmpty();
-	bool isFull();
-};
-
-// Constructor to initialize a queue
-template <class X>
-queue<X>::queue(int size)
-{
-	arr = new X[size];
-	capacity = size;
-	front = 0;
-	rear = -1;
-	count = 0;
+bool readMechanics(const std::string& path, std::vector<mechanic>& out) {
+    std::ifstream input(path);
+    if (!input) { std::cerr << "Cannot open " << path << '\n'; return false; }
+    std::set<int> ids;
+    std::string line;
+    int lineNumber = 0;
+    while (std::getline(input, line)) {
+        ++lineNumber;
+        if (line.find_first_not_of(" \t\r") == std::string::npos) continue;
+        std::istringstream row(line);
+        std::string name, extra;
+        int age, id;
+        if (!(row >> name >> age >> id) || (row >> extra) || age <= 0 || id < 0 || !ids.insert(id).second) {
+            std::cerr << "Invalid mechanic record at " << path << ':' << lineNumber << '\n';
+            return false;
+        }
+        mechanic person;
+        person.set_name(name);
+        person.set_age(age);
+        person.set_id(id);
+        out.push_back(person);
+    }
+    if (out.empty()) { std::cerr << "No mechanics in " << path << '\n'; return false; }
+    return true;
 }
 
-// Utility function to dequeue the front element
-template <class X>
-void queue<X>::dequeue()
-{
-	// check for queue underflow
-	if (isEmpty())
-	{
-		cout << "Underflow\nProgram Terminated\n";
-		exit(EXIT_FAILURE);
-	}
-
-	cout << "Removing " << arr[front] << endl;
-
-	front = (front + 1) % capacity;
-	count--;
+bool readCustomers(const std::string& path, std::vector<customer>& out) {
+    std::ifstream input(path);
+    if (!input) { std::cerr << "Cannot open " << path << '\n'; return false; }
+    std::string line;
+    int lineNumber = 0;
+    while (std::getline(input, line)) {
+        ++lineNumber;
+        if (line.find_first_not_of(" \t\r") == std::string::npos) continue;
+        std::istringstream row(line);
+        std::string name, extra;
+        int age, hours, mins;
+        if (!(row >> name >> age >> hours >> mins) || (row >> extra) || age <= 0 ||
+            hours < 0 || hours > 23 || mins < 0 || mins > 59 ||
+            hours * 60 + mins + serviceMinutes > 24 * 60) {
+            std::cerr << "Invalid customer record at " << path << ':' << lineNumber << '\n';
+            return false;
+        }
+        customer person;
+        person.set_name(name);
+        person.set_age(age);
+        person.setappointment({hours, mins});
+        out.push_back(person);
+    }
+    return true;
 }
 
-// Utility function to add an item to the queue
-template <class X>
-void queue<X>::enqueue(X item)
-{
-	// check for queue overflow
-	if (isFull())
-	{
-		cout << "Overflow\nProgram Terminated\n";
-		exit(EXIT_FAILURE);
-	}
-
-	cout << "Inserting " << item << endl;
-
-	rear = (rear + 1) % capacity;
-	arr[rear] = item;
-	count++;
+int toMinutes(appointment ap) { return ap.hours * 60 + ap.mins; }
+void printTime(appointment ap) {
+    std::cout << std::setfill('0') << std::setw(2) << ap.hours << ':'
+              << std::setw(2) << ap.mins << std::setfill(' ');
 }
+}  // namespace
 
-// Utility function to return the front element of the queue
-template <class X>
-X queue<X>::peek()
-{
-	if (isEmpty())
-	{
-		cout << "UnderFlow\nProgram Terminated\n";
-		exit(EXIT_FAILURE);
-	}
-	return arr[front];
-}
+int main(int argc, char* argv[]) {
+    if (argc != 1 && argc != 3) {
+        std::cerr << "Usage: scheduler [Mechanics.txt Customers.txt]\n";
+        return 2;
+    }
+    const std::string mechanicsPath = argc == 3 ? argv[1] : "Mechanics.txt";
+    const std::string customersPath = argc == 3 ? argv[2] : "Customers.txt";
+    std::vector<mechanic> mechanics;
+    std::vector<customer> customers;
+    if (!readMechanics(mechanicsPath, mechanics) || !readCustomers(customersPath, customers)) return 1;
 
-// Utility function to return the size of the queue
-template <class X>
-int queue<X>::size() {
-	return count;
-}
-
-// Utility function to check if the queue is empty or not
-template <class X>
-bool queue<X>::isEmpty() {
-	return (size() == 0);
-}
-
-// Utility function to check if the queue is full or not
-template <class X>
-bool queue<X>::isFull() {
-	return (size() == capacity);
-}
-
-
-const int Size = 4;
-
-
-int main (){
-    queue<customer> q(15);
-
-
-mechanic mechanics[Size] ;//assuming only 4 mechanics
-customer customers[15];
-ifstream x,y;
-x.open("Mechanic.txt");
-y.open("Customer.txt");
-
-string name = "";
-int age, id;
-
-int i=0;
-while (!x.eof()){
-    x>> name >> age >> id;
-    mechanics[i].setname(name);
-    mechanics[i].setAge(age);
-    mechanics[i].setID(id);
-    i++;
-}
-int hours, mins;
-while (!y.eof()){
-    y>> name >> age >> hours >> mins;
-}
-for (int j =0; j<4; j++){
-    mechanics[i].print();
-}
-
-/*for(int i = 0; i < 15 ; i++){
-        for(int j = 0; j<15; j++){
-            if((customers+i)<(customers+j)){
-                x = *(customers+i);
-                *(customers+i) = *(customers+j);
-                *(customers+j) = x;
+    // Earliest requested time first; ties retain input order. A mechanic can
+    // serve up to four non-overlapping, one-hour appointments in one day.
+    std::stable_sort(customers.begin(), customers.end(), [](const customer& a, const customer& b) {
+        return toMinutes(a.getappointment()) < toMinutes(b.getappointment());
+    });
+    for (customer& person : customers) {
+        const appointment requested = person.getappointment();
+        for (mechanic& worker : mechanics) {
+            if (worker.isavailable(requested)) {
+                worker.setappointments(requested);
+                person.setMechanicID(worker.get_id());
+                break;
             }
         }
+        std::cout << person.get_name() << " | ";
+        printTime(requested);
+        if (person.getMechanicID() < 0) std::cout << " | UNASSIGNED\n";
+        else std::cout << " | mechanic " << person.getMechanicID() << '\n';
     }
-    for(int i = 0; i < 15; i++){
-        q.enqueue<customer>(*(customers+i));
-    }*/
-
-
-
-
-
-
-
-
-
-
-
-
-x.close();
-y.close();
-
     return 0;
 }
